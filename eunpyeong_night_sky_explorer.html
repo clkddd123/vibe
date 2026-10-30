@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>서울 은평구 밤하늘 천체 관측 가이드</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        space: {
+                            900: '#050814',
+                            800: '#0c1228',
+                            700: '#162040',
+                            600: '#223260',
+                            accent: '#f59e0b',
+                            cyan: '#38bdf8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050814;
+            color: #e2e8f0;
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(12, 18, 40, 0.78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-button {
+            background: rgba(22, 32, 64, 0.65);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.2s ease;
+        }
+        .glass-button:hover {
+            background: rgba(56, 189, 248, 0.22);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050814;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #223260;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f59e0b;
+        }
+        #sky-container {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+        }
+        @media (min-width: 768px) {
+            #sky-container {
+                padding-top: 0;
+                height: 520px;
+            }
+        }
+        #skyCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 9999px;
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.18), inset 0 0 45px rgba(0, 0, 0, 0.85);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between pb-6">
+
+    <!-- Header / Navbar -->
+    <header class="glass-panel sticky top-0 z-50 border-b border-slate-800 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-indigo-950/80 rounded-xl border border-indigo-500/30 text-amber-400">
+                    <i class="fa-solid fa-moon text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-100 flex items-center gap-2">
+                        서울 은평구 밤하늘 가이드
+                        <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-indigo-900/60 border border-indigo-400/30 text-indigo-300">
+                            <i class="fa-solid fa-location-dot text-red-400 mr-1"></i>북한산·봉산 관측 기준
+                        </span>
+                    </h1>
+                    <p class="text-xs text-slate-400" id="current-date-display">날짜를 선택하세요</p>
+                </div>
+            </div>
+
+            <!-- Date Selector & Real-Time Sync Toggle -->
+            <div class="flex items-center space-x-2 text-xs w-full md:w-auto justify-end">
+                <div class="flex items-center bg-space-800 border border-slate-700/60 rounded-lg px-3 py-1.5">
+                    <i class="fa-regular fa-calendar-days text-amber-400 mr-2"></i>
+                    <input type="date" id="datePicker" class="bg-transparent text-slate-200 outline-none cursor-pointer">
+                </div>
+                <button id="btnNow" class="glass-button px-3 py-1.5 rounded-lg text-slate-200 flex items-center gap-1.5 font-medium hover:text-amber-300">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>오늘/현재 시각</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-4 py-4 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: Controls, Weather Status & Target Checklist -->
+        <div class="lg:col-span-5 flex flex-col gap-5">
+            
+            <!-- Time Control Panel -->
+            <div class="glass-panel p-5 rounded-2xl border border-indigo-500/20 shadow-lg">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-sm font-semibold text-amber-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-sliders"></i> 관측 시각 선택 (24시간)
+                    </span>
+                    <span id="selectedTimeLabel" class="text-lg font-bold text-sky-300 font-mono bg-space-900/80 px-3 py-0.5 rounded-md border border-sky-500/30">
+                        22:00
+                    </span>
+                </div>
+                
+                <!-- Time Range Slider (0 to 24 hours) -->
+                <input type="range" id="timeSlider" min="0" max="24" step="0.25" value="22" 
+                       class="w-full h-2 bg-space-700 rounded-lg appearance-none cursor-pointer accent-amber-400 mb-3">
+                
+                <!-- Quick Preset Buttons -->
+                <div class="grid grid-cols-4 gap-1.5 mb-3 text-[11px]">
+                    <button id="presetSunset" class="glass-button py-1 rounded text-slate-300">🌅 일몰 시각</button>
+                    <button id="presetNight" class="glass-button py-1 rounded text-slate-300">🌌 자정 (00시)</button>
+                    <button id="presetDawn" class="glass-button py-1 rounded text-slate-300">🌄 일출 직전</button>
+                    <button id="btnPlayAnimation" class="glass-button py-1 rounded text-amber-300 font-medium">▶️ 자동재생</button>
+                </div>
+
+                <div class="flex justify-between text-[11px] text-slate-400 font-mono">
+                    <span>00:00 (자정)</span>
+                    <span>06:00 (아침)</span>
+                    <span>12:00 (정오)</span>
+                    <span>18:00 (저녁)</span>
+                    <span>24:00 (자정)</span>
+                </div>
+            </div>
+
+            <!-- Weather & Solar/Lunar Data (KMA Forecast Simulation) -->
+            <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-sun-moon text-sky-400"></i> 기상청 예보 모델 기반 관측 환경
+                    </h2>
+                    <span id="qualityBadge" class="text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30 font-medium">
+                        관측 적합도: 최상
+                    </span>
+                </div>
+
+                <!-- Sun & Moon Info Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3 text-center">
+                    <div class="bg-space-900/60 p-2 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 mb-0.5">일출 / 일몰</p>
+                        <p class="text-xs font-semibold text-amber-300" id="sunsetSunrise">06:50 / 17:35</p>
+                    </div>
+                    <div class="bg-space-900/60 p-2 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 mb-0.5">천문 박명 종료</p>
+                        <p class="text-xs font-semibold text-sky-300" id="twilightTime">19:02 ~ 05:22</p>
+                    </div>
+                    <div class="bg-space-900/60 p-2 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 mb-0.5">달 위상 / 음력</p>
+                        <p class="text-xs font-semibold text-amber-200" id="moonPhaseDisplay">상현달 (68%)</p>
+                    </div>
+                    <div class="bg-space-900/60 p-2 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 mb-0.5">월출 / 월몰</p>
+                        <p class="text-xs font-semibold text-slate-200" id="moonriseMoonset">13:40 / 01:15</p>
+                    </div>
+                </div>
+
+                <!-- Hourly Weather Metrics -->
+                <div class="grid grid-cols-3 gap-2.5 text-center">
+                    <div class="bg-space-900/60 p-2 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 mb-0.5">예상 기온 / 바람</p>
+                        <p class="text-xs font-semibold text-slate-200" id="tempDisplay">8.2 °C (1.5m/s)</p>
+                    </div>
+                    <div class="bg-space-900/60 p-2 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 mb-0.5">습도 / 이슬점</p>
+                        <p class="text-xs font-semibold text-slate-200" id="humidityDisplay">52% (2°C)</p>
+                    </div>
+                    <div class="bg-space-900/60 p-2 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-400 mb-0.5">운량 (구름) / 시정</p>
+                        <p class="text-xs font-semibold text-emerald-400" id="cloudDisplay">맑음 (0/10)</p>
+                    </div>
+                </div>
+
+                <!-- Recommendation Notice -->
+                <div class="mt-3 text-[12px] bg-indigo-950/40 border border-indigo-800/40 p-2.5 rounded-xl text-indigo-200 flex items-start gap-2">
+                    <i class="fa-solid fa-circle-info text-amber-400 mt-0.5 shrink-0"></i>
+                    <p id="recommendationText">
+                        북한산 자락, 은평한옥마을, 봉산 해맞이공원은 도심 불빛 차단 효과가 있어 별자리 관측에 적합합니다.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Visible Checklist -->
+            <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex-grow flex flex-col min-h-[220px]">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-amber-400"></i> 선택 시각의 은평구 가시 천체 (<span id="visibleCount">0</span>개)
+                    </h2>
+                    <span class="text-[11px] text-slate-400">클릭 시 성도에서 강조</span>
+                </div>
+
+                <!-- Checklist List -->
+                <div class="overflow-y-auto max-h-[200px] pr-1 space-y-2" id="celestialList">
+                    <!-- Dynamic rendering -->
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Interactive Night Sky Map Canvas & Inspector -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+            
+            <!-- Sky Map Canvas Container -->
+            <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-indigo-500/30 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
+                
+                <!-- Map Controls Overlay -->
+                <div class="w-full flex justify-between items-center mb-2 z-10">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="font-medium text-slate-300" id="skyStateTitle">은평구 밤하늘 천구 돔 (Dome View)</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="toggleGridBtn" class="glass-button text-[11px] px-2.5 py-1 rounded text-slate-300 hover:text-white">
+                            <i class="fa-solid fa-border-all mr-1"></i> 좌표망
+                        </button>
+                        <button id="toggleLinesBtn" class="glass-button text-[11px] px-2.5 py-1 rounded text-amber-300 hover:text-white">
+                            <i class="fa-solid fa-project-diagram mr-1"></i> 별자리 형태선
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas Wrapper -->
+                <div class="w-full max-w-[500px] mx-auto my-auto relative">
+                    <div id="sky-container">
+                        <canvas id="skyCanvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Sky Map Footnote -->
+                <div class="w-full flex justify-between items-center text-[11px] text-slate-400 mt-3 pt-2 border-t border-slate-800/60 z-10">
+                    <span>* 원 중심: 천정 (머리 바로 위)</span>
+                    <span>* 테두리: 지평선 (N:북, E:동, S:남, W:서)</span>
+                </div>
+            </div>
+
+            <!-- Detailed Celestial Object Inspector -->
+            <div class="glass-panel p-5 rounded-2xl border border-amber-500/20 bg-space-800/90 relative" id="inspectorPanel">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        <div id="inspectorIcon" class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl">
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                        <div>
+                            <h3 id="inspectorName" class="font-bold text-base text-slate-100">천체를 선택하세요</h3>
+                            <p id="inspectorCategory" class="text-xs text-amber-400/90">지도의 천체를 클릭하거나 좌측 목록에서 선택</p>
+                        </div>
+                    </div>
+                    <span id="inspectorMag" class="text-xs bg-space-900 border border-slate-700 px-2.5 py-1 rounded-full font-mono text-sky-300">
+                        밝기: -
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-3 text-xs">
+                    <div class="bg-space-900/80 p-2 rounded-lg border border-slate-800/80">
+                        <span class="text-slate-400 text-[11px] block">방위각 (Azimuth)</span>
+                        <span id="inspectorAzimuth" class="font-semibold text-slate-200 font-mono">-</span>
+                    </div>
+                    <div class="bg-space-900/80 p-2 rounded-lg border border-slate-800/80">
+                        <span class="text-slate-400 text-[11px] block">고도 (Altitude)</span>
+                        <span id="inspectorAltitude" class="font-semibold text-slate-200 font-mono">-</span>
+                    </div>
+                    <div class="bg-space-900/80 p-2 rounded-lg border border-slate-800/80">
+                        <span class="text-slate-400 text-[11px] block">추천 관측 장비</span>
+                        <span id="inspectorTool" class="font-semibold text-emerald-400">-</span>
+                    </div>
+                    <div class="bg-space-900/80 p-2 rounded-lg border border-slate-800/80">
+                        <span class="text-slate-400 text-[11px] block">은평구 관측 포인트</span>
+                        <span id="inspectorBestTime" class="font-semibold text-amber-300 font-mono">-</span>
+                    </div>
+                </div>
+
+                <p id="inspectorDescription" class="text-xs text-slate-300 leading-relaxed border-t border-slate-800/80 pt-2.5">
+                    성도 상의 별자리, 행성, 달 아이콘을 클릭하면 관측을 위한 상세 위치 정보 및 안내가 제공됩니다.
+                </p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 mt-4 text-center text-xs text-slate-500">
+        <p>서울특별시 은평구 천체관측 가이드 • 북위 37.602° 동경 126.929° 기준 기상청 예보 시뮬레이션</p>
+    </footer>
+
+    <!-- JavaScript Application Engine -->
+    <script>
+        /**
+         * Real Major Stars Data with Precise Astronomical Spectral Colors (BV Color / Temperature)
+         */
+        const realStarsDatabase = [
+            { id: 'polaris', name: '북극성 (Polaris)', mag: 1.98, color: '#fff3c4', spectral: 'F7Ib (황백색 초거성)', area: '작은곰자리 구역 (Ursa Minor)', baseRA: 2.53, baseDec: 89.26 },
+            { id: 'sirius', name: '시리우스 (Sirius)', mag: -1.46, color: '#d4f1ff', spectral: 'A1V (청백색 주계열성)', area: '큰개자리 구역 (Canis Major)', baseRA: 6.75, baseDec: -16.72 },
+            { id: 'procyon', name: '프로키온 (Procyon)', mag: 0.38, color: '#fffae0', spectral: 'F5IV-V (황백색 준거성)', area: '작은개자리 구역 (Canis Minor)', baseRA: 7.65, baseDec: 5.22 },
+            { id: 'pollux', name: '폴룩스 (Pollux)', mag: 1.14, color: '#ff9f0a', spectral: 'K0III (주황색 적색거성)', area: '쌍둥이자리 구역 (Gemini)', baseRA: 7.76, baseDec: 28.03 },
+            { id: 'castor', name: '카스토르 (Castor)', mag: 1.58, color: '#e6f7ff', spectral: 'A1V (청백색 다중성계)', area: '쌍둥이자리 구역 (Gemini)', baseRA: 7.58, baseDec: 31.89 },
+            { id: 'spica', name: '스피카 (Spica)', mag: 0.98, color: '#70d6ff', spectral: 'B1III-IV (청색 거성)', area: '처녀자리 구역 (Virgo)', baseRA: 13.42, baseDec: -11.16 },
+            { id: 'altair', name: '견우성/알타이르 (Altair)', mag: 0.77, color: '#fef3c7', spectral: 'A7V (백색 주계열성)', area: '독수리자리 구역 (Aquila)', baseRA: 19.84, baseDec: 8.87 },
+            { id: 'fomalhaut', name: '포말하우트 (Fomalhaut)', mag: 1.16, color: '#e2f1ff', spectral: 'A3V (백색 주계열성)', area: '남쪽물고기자리 구역 (Piscis Austrinus)', baseRA: 22.96, baseDec: -29.62 },
+            { id: 'capella', name: '카펠라 (Capella)', mag: 0.08, color: '#ffd60a', spectral: 'G3III (노란색 삼중거성계)', area: '마차부자리 구역 (Auriga)', baseRA: 5.28, baseDec: 45.99 },
+            { id: 'antares', name: '안타레스 (Antares)', mag: 1.06, color: '#ff3b30', spectral: 'M1.5Iab (붉은색 적색초거성)', area: '전차/전갈자리 구역 (Scorpius)', baseRA: 16.49, baseDec: -26.43 }
+        ];
+
+        /**
+         * Celestial Database with Accurate Star Spectral Colors
+         */
+        const celestialDatabase = [
+            // Planets & Moon
+            {
+                id: 'saturn',
+                name: '토성 (Saturn)',
+                type: 'planet',
+                category: '행성',
+                mag: 0.7,
+                color: '#ffe082',
+                area: '물병자리/황도 구역',
+                tool: '소형 망원경',
+                description: '아름다운 고리를 가진 요성. 노란 빛으로 빛나며 소형 망원경으로 고리를 관측할 수 있습니다.',
+                baseRA: 22.5, baseDec: -12, icon: 'fa-ring'
+            },
+            {
+                id: 'jupiter',
+                name: '목성 (Jupiter)',
+                type: 'planet',
+                category: '행성',
+                mag: -2.4,
+                color: '#fff176',
+                area: '황소자리/황도 구역',
+                tool: '맨눈 / 쌍안경',
+                description: '태양계 최대의 행성. 도심 밤하늘에서도 선명하며, 쌍안경으로 4대 갈릴레이 위성도 확인할 수 있습니다.',
+                baseRA: 4.2, baseDec: 21, icon: 'fa-circle'
+            },
+            {
+                id: 'mars',
+                name: '화성 (Mars)',
+                type: 'planet',
+                category: '행성',
+                mag: 0.3,
+                color: '#ff5252',
+                area: '쌍둥이자리/황도 구역',
+                tool: '맨눈 / 망원경',
+                description: '붉게 빛나는 붉은 행성. 오리온자리 및 쌍둥이자리 부근에서 강렬한 붉은 빛을 발산합니다.',
+                baseRA: 7.1, baseDec: 23, icon: 'fa-circle'
+            },
+            {
+                id: 'venus',
+                name: '금성 (Venus)',
+                type: 'planet',
+                category: '행성',
+                mag: -4.0,
+                color: '#fffde7',
+                area: '궁수자리/황도 구역',
+                tool: '맨눈',
+                description: '개밥바라기성/샛별로 불리는 가장 밝은 행성. 일몰 직후 서쪽 하늘이나 일출 직전 동쪽 하늘에서 압도적으로 빛납니다.',
+                baseRA: 18.5, baseDec: -20, icon: 'fa-star'
+            },
+            {
+                id: 'moon',
+                name: '달 (Moon)',
+                type: 'moon',
+                category: '위성',
+                mag: -11.2,
+                color: '#fff9c4',
+                area: '황도대 구역',
+                tool: '맨눈 / 쌍안경',
+                description: '은평구 어디서나 명확하게 관측되는 천체. 쌍안경으로 표면 크레이터와 바다 지형을 관측할 수 있습니다.',
+                baseRA: 3.5, baseDec: 18, icon: 'fa-moon'
+            },
+
+            // Spring Constellations
+            {
+                id: 'leo',
+                name: '사자자리 (Leo)',
+                alphaStar: '레굴루스 (Regulus)',
+                type: 'constellation',
+                category: '봄 별자리',
+                mag: 1.36, color: '#b3e5fc', area: '사자자리 (Leo) 구역', tool: '맨눈',
+                description: '봄철 밤하늘을 대표하는 별자리. 알파성 레굴루스(Regulus)는 B형 청백색 항성입니다.',
+                baseRA: 10.14, baseDec: 11.97,
+                stars: [{ra: 10.14, dec: 11.97, color: '#70d6ff'}, {ra: 10.33, dec: 19.84, color: '#fff9c4'}, {ra: 11.24, dec: 20.52, color: '#e0f2fe'}, {ra: 11.82, dec: 14.57, color: '#b3e5fc'}],
+                lines: [[0,1], [1,2], [2,3], [3,0]]
+            },
+            {
+                id: 'bootes',
+                name: '목동자리 (Boötes)',
+                alphaStar: '아크투루스 (Arcturus)',
+                type: 'constellation',
+                category: '봄 별자리',
+                mag: -0.05, color: '#ff8800', area: '목동자리 (Boötes) 구역', tool: '맨눈',
+                description: '봄철의 대삼각형을 이루는 주황색 0등성 거성 아크투루스(Arcturus)가 알파성으로 위치합니다.',
+                baseRA: 14.26, baseDec: 19.18,
+                stars: [{ra: 14.26, dec: 19.18, color: '#ff8800'}, {ra: 14.53, dec: 27.07, color: '#fff5c0'}, {ra: 15.03, dec: 33.31, color: '#80d8ff'}],
+                lines: [[0,1], [1,2]]
+            },
+
+            // Summer Constellations
+            {
+                id: 'cygnus',
+                name: '백조자리 (Cygnus)',
+                alphaStar: '데네브 (Deneb)',
+                type: 'constellation',
+                category: '여름 별자리',
+                mag: 1.25, color: '#e0f7fa', area: '백조자리 (Cygnus) 구역', tool: '맨눈',
+                description: '여름철 대삼각형의 한 축인 백조자리의 알파성 데네브(Deneb)는 A형 백색 초거성입니다.',
+                baseRA: 20.69, baseDec: 45.28,
+                stars: [{ra: 20.69, dec: 45.28, color: '#e0f7fa'}, {ra: 19.51, dec: 27.96, color: '#ffd54f'}, {ra: 21.31, dec: 30.22, color: '#80d8ff'}],
+                lines: [[0,1], [0,2]]
+            },
+            {
+                id: 'lyra',
+                name: '거문고자리 (Lyra)',
+                alphaStar: '직녀성 / 베가 (Vega)',
+                type: 'constellation',
+                category: '여름 별자리',
+                mag: 0.03, color: '#d4f1ff', area: '거문고자리 (Lyra) 구역', tool: '맨눈',
+                description: '여름 밤하늘의 주아성 직녀성(Vega)은 눈부신 A0V형 청백색 항성입니다.',
+                baseRA: 18.62, baseDec: 38.78,
+                stars: [{ra: 18.62, dec: 38.78, color: '#d4f1ff'}, {ra: 18.84, dec: 36.8, color: '#fff9c4'}, {ra: 18.97, dec: 32.69, color: '#b3e5fc'}],
+                lines: [[0,1], [1,2]]
+            },
+
+            // Autumn Constellations
+            {
+                id: 'cassiopeia',
+                name: '카시오페이아자리 (Cassiopeia)',
+                alphaStar: '쉐다르 (Schedar)',
+                type: 'constellation',
+                category: '가을/북쪽 별자리',
+                mag: 2.2, color: '#ffb74d', area: '카시오페이아 (Cassiopeia) 구역', tool: '맨눈',
+                description: '선명한 W자 중심부에 위치한 카시오페이아의 알파성 쉐다르(Schedar)는 K형 주황색 거성입니다.',
+                baseRA: 0.68, baseDec: 56.54,
+                stars: [
+                    { ra: 0.15, dec: 59.15, color: '#80d8ff' }, { ra: 0.68, dec: 56.54, color: '#ffb74d' },
+                    { ra: 0.94, dec: 60.72, color: '#e0f7fa' }, { ra: 1.42, dec: 60.23, color: '#fff176' }, { ra: 1.9, dec: 63.67, color: '#80d8ff' }
+                ],
+                lines: [[0,1], [1,2], [2,3], [3,4]]
+            },
+            {
+                id: 'pegasus',
+                name: '페가수스자리 (Pegasus)',
+                alphaStar: '마르카브 (Markab)',
+                type: 'constellation',
+                category: '가을 별자리',
+                mag: 2.49, color: '#b3e5fc', area: '페가수스자리 (Pegasus) 구역', tool: '맨눈',
+                description: '가을 사각형 모서리의 마르카브(Markab)는 B9형 청백색 주계열성입니다.',
+                baseRA: 23.08, baseDec: 15.21,
+                stars: [
+                    { ra: 23.08, dec: 15.21, color: '#b3e5fc' }, { ra: 23.06, dec: 28.08, color: '#fff9c4' },
+                    { ra: 0.14, dec: 28.53, color: '#70d6ff' }, { ra: 0.22, dec: 15.18, color: '#e0f2fe' }
+                ],
+                lines: [[0,1], [1,2], [2,3], [3,0]]
+            },
+
+            // Winter Constellations
+            {
+                id: 'orion',
+                name: '오리온자리 (Orion)',
+                alphaStar: '베텔게우스 (Betelgeuse)',
+                type: 'constellation',
+                category: '겨울 별자리',
+                mag: 0.42, color: '#ff4500', area: '오리온자리 (Orion) 구역', tool: '맨눈 / 쌍안경',
+                description: '겨울철 대표 초거성인 오리온자리의 알파성 베텔게우스(Betelgeuse)는 강렬한 M형 붉은 적색초거성입니다.',
+                baseRA: 5.92, baseDec: 7.41,
+                stars: [
+                    { ra: 5.92, dec: 7.41, color: '#ff4500' }, { ra: 5.24, dec: -8.20, color: '#70d6ff' }, // Rigel is blue
+                    { ra: 5.36, dec: -0.30, color: '#b3e5fc' }, { ra: 5.60, dec: -1.20, color: '#b3e5fc' }, { ra: 5.31, dec: 6.35, color: '#e0f2fe' }
+                ],
+                lines: [[0,4], [4,2], [2,3], [3,1], [0,3]]
+            },
+            {
+                id: 'taurus',
+                name: '황소자리 (Taurus)',
+                alphaStar: '알데바란 (Aldebaran)',
+                type: 'constellation',
+                category: '겨울 별자리',
+                mag: 0.85, color: '#ff9100', area: '황소자리 (Taurus) 구역', tool: '맨눈 / 쌍안경',
+                description: '황소의 붉은 눈에 해당하는 알파성 알데바란(Aldebaran)은 K5형 주황/붉은색 적색거성입니다.',
+                baseRA: 4.60, baseDec: 16.51,
+                stars: [
+                    { ra: 4.60, dec: 16.51, color: '#ff9100' }, { ra: 4.47, dec: 19.18, color: '#fff176' },
+                    { ra: 5.42, dec: 28.61, color: '#70d6ff' }, { ra: 3.79, dec: 24.11, color: '#b3e5fc' }
+                ],
+                lines: [[0,1], [1,2], [1,3]]
+            },
+            {
+                id: 'ursa_major',
+                name: '북두칠성 (Ursa Major)',
+                alphaStar: '두베 (Dubhe)',
+                type: 'constellation',
+                category: '북쪽 별자리',
+                mag: 1.79, color: '#ffb74d', area: '큰곰자리 (Ursa Major) 구역', tool: '맨눈',
+                description: '북극성을 가리키는 북두칠성의 첫 번째 알파성 두베(Dubhe)는 K0형 주황 거성입니다.',
+                baseRA: 11.06, baseDec: 61.75,
+                stars: [
+                    { ra: 11.06, dec: 61.75, color: '#ffb74d' }, { ra: 11.16, dec: 56.38, color: '#b3e5fc' },
+                    { ra: 11.89, dec: 53.69, color: '#70d6ff' }, { ra: 12.26, dec: 57.03, color: '#e0f2fe' },
+                    { ra: 12.90, dec: 55.96, color: '#b3e5fc' }, { ra: 13.39, dec: 49.31, color: '#70d6ff' }
+                ],
+                lines: [[0,1], [1,2], [2,3], [3,0], [3,4], [4,5]]
+            }
+        ];
+
+        // Global State Management
+        let selectedHour = 22.0; // Default 22:00
+        let selectedDate = new Date(); // Dynamic Date
+        let selectedObjectId = 'saturn';
+        let selectedStarDetail = null; // Specific clicked star object info
+        let isAnimationRunning = false;
+        let animationInterval = null;
+        let showGrid = true;
+        let showLines = true;
+
+        const canvas = document.getElementById('skyCanvas');
+        const ctx = canvas.getContext('2d');
+
+        window.onload = function() {
+            setupResponsiveCanvas();
+            setupEventListeners();
+            syncDateInput();
+            updateSkySimulation();
+
+            window.addEventListener('resize', () => {
+                setupResponsiveCanvas();
+                drawSkyMap();
+            });
+        };
+
+        function setupResponsiveCanvas() {
+            const container = document.getElementById('sky-container');
+            const rect = container.getBoundingClientRect();
+            const size = Math.min(rect.width, rect.height || rect.width);
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = `${size}px`;
+            canvas.style.height = `${size}px`;
+        }
+
+        function syncDateInput() {
+            const datePicker = document.getElementById('datePicker');
+            const yyyy = selectedDate.getFullYear();
+            const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(selectedDate.getDate()).padStart(2, '0');
+            datePicker.value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        function setupEventListeners() {
+            const slider = document.getElementById('timeSlider');
+            slider.addEventListener('input', (e) => {
+                selectedHour = parseFloat(e.target.value);
+                updateSkySimulation();
+            });
+
+            document.getElementById('datePicker').addEventListener('change', (e) => {
+                if (e.target.value) {
+                    selectedDate = new Date(e.target.value);
+                    updateSkySimulation();
+                }
+            });
+
+            document.getElementById('btnNow').addEventListener('click', () => {
+                selectedDate = new Date();
+                selectedHour = selectedDate.getHours() + selectedDate.getMinutes() / 60;
+                slider.value = selectedHour;
+                syncDateInput();
+                updateSkySimulation();
+            });
+
+            // Quick Preset Buttons
+            document.getElementById('presetSunset').addEventListener('click', () => {
+                const solar = calculateSolarLunarData(selectedDate);
+                selectedHour = solar.sunsetHour;
+                slider.value = selectedHour;
+                updateSkySimulation();
+            });
+
+            document.getElementById('presetNight').addEventListener('click', () => {
+                selectedHour = 0; // Midnight
+                slider.value = selectedHour;
+                updateSkySimulation();
+            });
+
+            document.getElementById('presetDawn').addEventListener('click', () => {
+                const solar = calculateSolarLunarData(selectedDate);
+                selectedHour = Math.max(0, solar.sunriseHour - 1);
+                slider.value = selectedHour;
+                updateSkySimulation();
+            });
+
+            document.getElementById('btnPlayAnimation').addEventListener('click', toggleAnimation);
+
+            document.getElementById('toggleGridBtn').addEventListener('click', () => {
+                showGrid = !showGrid;
+                drawSkyMap();
+            });
+
+            document.getElementById('toggleLinesBtn').addEventListener('click', () => {
+                showLines = !showLines;
+                drawSkyMap();
+            });
+
+            canvas.addEventListener('click', handleCanvasClick);
+        }
+
+        function toggleAnimation() {
+            const btn = document.getElementById('btnPlayAnimation');
+            if (isAnimationRunning) {
+                clearInterval(animationInterval);
+                isAnimationRunning = false;
+                btn.innerHTML = `▶️ 자동재생`;
+                btn.classList.remove('text-emerald-400');
+                btn.classList.add('text-amber-300');
+            } else {
+                isAnimationRunning = true;
+                btn.innerHTML = `⏸️ 일시정지`;
+                btn.classList.remove('text-amber-300');
+                btn.classList.add('text-emerald-400');
+
+                animationInterval = setInterval(() => {
+                    selectedHour += 0.25;
+                    if (selectedHour > 24) selectedHour = 0;
+                    document.getElementById('timeSlider').value = selectedHour;
+                    updateSkySimulation();
+                }, 250);
+            }
+        }
+
+        /**
+         * KMA Standard Astronomy & Weather Logic Simulation
+         */
+        function calculateSolarLunarData(date) {
+            const dayOfYear = getDayOfYear(date);
+            
+            // Solar declination approximation for Korea Lat 37.6 N
+            const declination = -23.44 * Math.cos((2 * Math.PI / 365) * (dayOfYear + 10));
+            const sunsetHour = 18.0 + (declination / 23.44) * 1.25; 
+            const sunriseHour = 6.0 - (declination / 23.44) * 1.25;
+
+            // Moon phase (lunar age)
+            const synodicMonth = 29.53058867;
+            const knownNewMoon = new Date(2023, 0, 21); // Base New Moon
+            const diffDays = (date - knownNewMoon) / (1000 * 60 * 60 * 24);
+            const moonAge = (diffDays % synodicMonth + synodicMonth) % synodicMonth;
+            const moonIllumination = Math.round((1 - Math.cos((moonAge / synodicMonth) * 2 * Math.PI)) / 2 * 100);
+
+            let moonPhaseName = "초승달";
+            if (moonAge < 2 || moonAge > 27.5) moonPhaseName = "삭(신월)";
+            else if (moonAge < 7) moonPhaseName = "초승달";
+            else if (moonAge < 9) moonPhaseName = "상현달";
+            else if (moonAge < 14) moonPhaseName = "차오르는 달";
+            else if (moonAge < 16) moonPhaseName = "보름달(망)";
+            else if (moonAge < 22) moonPhaseName = "기우는 달";
+            else if (moonAge < 24) moonPhaseName = "하현달";
+            else moonPhaseName = "그믐달";
+
+            return {
+                sunsetHour,
+                sunriseHour,
+                twilightStart: Math.min(23, sunsetHour + 1.2),
+                twilightEnd: Math.max(0, sunriseHour - 1.2),
+                moonAge,
+                moonIllumination,
+                moonPhaseName
+            };
+        }
+
+        function getDayOfYear(date) {
+            const start = new Date(date.getFullYear(), 0, 0);
+            const diff = date - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            return Math.floor(diff / oneDay);
+        }
+
+        // Seasonal Climate & Hourly Weather Simulation
+        function calculateKMAHourlyWeather(date, hour) {
+            const month = date.getMonth() + 1;
+            
+            // Korea monthly average temperatures (°C)
+            const avgTempMap = {1: -1.5, 2: 1.2, 3: 6.8, 4: 13.0, 5: 18.5, 6: 22.8, 7: 25.8, 8: 26.5, 9: 21.8, 10: 15.2, 11: 7.8, 12: 0.8};
+            const baseTemp = avgTempMap[month] || 15.0;
+
+            // Diurnal temperature variation
+            const tempVar = -Math.cos(((hour - 14) / 24) * 2 * Math.PI) * 4.5;
+            const temp = baseTemp + tempVar;
+
+            // Diurnal humidity variation
+            const humidity = Math.min(92, Math.max(30, Math.round(60 - tempVar * 3.5)));
+            const windSpeed = (1.2 + Math.abs(Math.sin(hour)) * 1.5).toFixed(1);
+
+            // Cloudiness (0-10 scale simulation)
+            const cloud = Math.round((Math.sin(date.getDate() + hour) + 1) * 2.5); // 0~5 range
+
+            return { temp, humidity, windSpeed, cloud };
+        }
+
+        // Horizontal Spherical Position Calculation Engine
+        function calculatePosition(obj, hour, date) {
+            const dayOfYear = getDayOfYear(date);
+            // Sidereal time shift by day of year and hour
+            const raOffset = (dayOfYear / 365.25) * 24;
+            const localHA = ((hour + raOffset - obj.baseRA + 24) % 24) * 15; // HA in degrees
+
+            const latRad = 37.6 * Math.PI / 180;
+            const decRad = obj.baseDec * Math.PI / 180;
+            const haRad = localHA * Math.PI / 180;
+
+            const sinAlt = Math.sin(decRad) * Math.sin(latRad) + Math.cos(decRad) * Math.cos(latRad) * Math.cos(haRad);
+            const alt = Math.asin(sinAlt);
+            
+            const cosAz = (Math.sin(decRad) - Math.sin(latRad) * sinAlt) / (Math.cos(latRad) * Math.cos(alt));
+            let az = Math.acos(Math.max(-1, Math.min(1, cosAz)));
+            
+            if (Math.sin(haRad) > 0) az = 2 * Math.PI - az;
+
+            return {
+                altitude: alt * 180 / Math.PI,
+                azimuth: az * 180 / Math.PI,
+                isVisible: (alt * 180 / Math.PI) > 4
+            };
+        }
+
+        function altAzToCanvasCoords(alt, az, canvasRadius) {
+            const center = canvasRadius;
+            const r = center * ((90 - alt) / 90) * 0.88;
+            const angleRad = (az - 90) * Math.PI / 180;
+            return {
+                x: center + r * Math.cos(angleRad),
+                y: center + r * Math.sin(angleRad)
+            };
+        }
+
+        /**
+         * Render & UI Synchronizer
+         */
+        function updateSkySimulation() {
+            updateTimeDisplay();
+            updateWeatherData();
+            updateCelestialChecklist();
+            drawSkyMap();
+            updateInspector();
+        }
+
+        function updateTimeDisplay() {
+            const displayHr = Math.floor(selectedHour);
+            const displayMin = Math.round((selectedHour - displayHr) * 60);
+            const timeString = `${String(displayHr).padStart(2, '0')}:${String(displayMin).padStart(2, '0')}`;
+            
+            document.getElementById('selectedTimeLabel').innerText = timeString;
+
+            const yyyy = selectedDate.getFullYear();
+            const mm = selectedDate.getMonth() + 1;
+            const dd = selectedDate.getDate();
+            document.getElementById('current-date-display').innerText = `${yyyy}년 ${mm}월 ${dd}일 ${timeString} 기준 관측 시뮬레이션`;
+        }
+
+        function updateWeatherData() {
+            const solar = calculateSolarLunarData(selectedDate);
+            const weather = calculateKMAHourlyWeather(selectedDate, selectedHour);
+
+            // Solar/Lunar HTML updates
+            const formatTime = (h) => {
+                const hh = Math.floor(h);
+                const mm = Math.round((h - hh) * 60);
+                return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+            };
+
+            document.getElementById('sunsetSunrise').innerText = `${formatTime(solar.sunriseHour)} / ${formatTime(solar.sunsetHour)}`;
+            document.getElementById('twilightTime').innerText = `${formatTime(solar.twilightStart)} ~ ${formatTime(solar.twilightEnd)}`;
+            document.getElementById('moonPhaseDisplay').innerText = `${solar.moonPhaseName} (${solar.moonIllumination}%)`;
+            
+            const moonrise = (solar.sunsetHour - 4 + 24) % 24;
+            const moonset = (solar.sunriseHour + 5) % 24;
+            document.getElementById('moonriseMoonset').innerText = `${formatTime(moonrise)} / ${formatTime(moonset)}`;
+
+            // Weather Metrics
+            document.getElementById('tempDisplay').innerText = `${weather.temp.toFixed(1)}°C (${weather.windSpeed}m/s)`;
+            document.getElementById('humidityDisplay').innerText = `${weather.humidity}% (${Math.max(-5, Math.round(weather.temp - 6))}°C)`;
+            document.getElementById('cloudDisplay').innerText = weather.cloud < 2 ? `맑음 (${weather.cloud}/10)` : `구름조금 (${weather.cloud}/10)`;
+
+            // Atmosphere / Seeing Quality Index
+            const isDaytime = selectedHour > solar.sunriseHour && selectedHour < solar.sunsetHour;
+            const badge = document.getElementById('qualityBadge');
+            const recText = document.getElementById('recommendationText');
+
+            if (isDaytime) {
+                badge.className = "text-xs px-2.5 py-1 rounded-full bg-amber-950 text-amber-300 border border-amber-500/30 font-medium";
+                badge.innerText = "주간 (태양 가시 시간대)";
+                recText.innerText = "현재 주간 시간대입니다. 야간 천체 관측은 일몰 시각 이후에 추천합니다.";
+            } else if (weather.cloud <= 2 && weather.humidity < 70) {
+                badge.className = "text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30 font-medium";
+                badge.innerText = "관측 적합도: 최상 🌟";
+                recText.innerText = "대기가 시원하고 맑아 은평구 북한산 자락, 이말산, 봉산 정상에서 대형 별자리 시야 확보가 최상입니다.";
+            } else {
+                badge.className = "text-xs px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-500/30 font-medium";
+                badge.innerText = "관측 적합도: 양호 👍";
+                recText.innerText = "도심 광공해를 피해 은평한옥마을 주변이나 서오릉 근처 산책로에서 행성을 관측하기 적합합니다.";
+            }
+        }
+
+        function updateCelestialChecklist() {
+            const listContainer = document.getElementById('celestialList');
+            listContainer.innerHTML = '';
+            let visibleCount = 0;
+
+            celestialDatabase.forEach(obj => {
+                const pos = calculatePosition(obj, selectedHour, selectedDate);
+                if (pos.isVisible) {
+                    visibleCount++;
+                    const card = document.createElement('div');
+                    const isSelected = obj.id === selectedObjectId;
+
+                    card.className = `p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                        isSelected 
+                        ? 'bg-amber-500/20 border-amber-500/60 text-white shadow-md' 
+                        : 'bg-space-900/60 border-slate-800 hover:border-slate-700 text-slate-300'
+                    }`;
+
+                    card.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-lg bg-space-800 border border-slate-700 flex items-center justify-center text-amber-400 text-xs">
+                                <i class="fa-solid ${obj.icon || 'fa-star'}"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-xs text-slate-100">${obj.name}</div>
+                                <div class="text-[11px] text-slate-400">${obj.category} • ${getDirectionName(pos.azimuth)}</div>
+                            </div>
+                        </div>
+                        <div class="text-right font-mono">
+                            <div class="text-xs font-semibold text-sky-300">고도 ${Math.round(pos.altitude)}°</div>
+                            <div class="text-[10px] text-slate-400">밝기 ${obj.mag}m</div>
+                        </div>
+                    `;
+
+                    card.addEventListener('click', () => {
+                        selectedObjectId = obj.id;
+                        updateCelestialChecklist();
+                        drawSkyMap();
+                        updateInspector();
+                    });
+
+                    listContainer.appendChild(card);
+                }
+            });
+
+            document.getElementById('visibleCount').innerText = visibleCount;
+        }
+
+        function getDirectionName(azimuth) {
+            if (azimuth >= 337.5 || azimuth < 22.5) return '북쪽';
+            if (azimuth >= 22.5 && azimuth < 67.5) return '북동쪽';
+            if (azimuth >= 67.5 && azimuth < 112.5) return '동쪽';
+            if (azimuth >= 112.5 && azimuth < 157.5) return '남동쪽';
+            if (azimuth >= 157.5 && azimuth < 202.5) return '남쪽';
+            if (azimuth >= 202.5 && azimuth < 247.5) return '남서쪽';
+            if (azimuth >= 247.5 && azimuth < 292.5) return '서쪽';
+            return '북서쪽';
+        }
+
+        /**
+         * Dynamic Canvas Drawing Engine
+         */
+        function drawSkyMap() {
+            const rect = canvas.getBoundingClientRect();
+            const size = rect.width;
+            const center = size / 2;
+            const radius = center * 0.92;
+
+            ctx.clearRect(0, 0, size, size);
+
+            const solar = calculateSolarLunarData(selectedDate);
+            const isDaytime = selectedHour > solar.sunriseHour && selectedHour < solar.sunsetHour;
+
+            // Sky Background Color Dynamic Transition (Daylight vs Twilight vs Night Sky)
+            const skyGradient = ctx.createRadialGradient(center, center, 0, center, center, radius);
+            if (isDaytime) {
+                skyGradient.addColorStop(0, '#38bdf8');
+                skyGradient.addColorStop(0.8, '#0284c7');
+                skyGradient.addColorStop(1, '#0369a1');
+                document.getElementById('skyStateTitle').innerText = "은평구 주간 하늘 (태양 상공)";
+            } else {
+                skyGradient.addColorStop(0, '#0c1328');
+                skyGradient.addColorStop(0.7, '#070b18');
+                skyGradient.addColorStop(1, '#03050c');
+                document.getElementById('skyStateTitle').innerText = "은평구 야간 천구 돔 (Dome View)";
+            }
+
+            ctx.beginPath();
+            ctx.arc(center, center, radius, 0, Math.PI * 2);
+            ctx.fillStyle = skyGradient;
+            ctx.fill();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Grid
+            if (showGrid) {
+                ctx.strokeStyle = isDaytime ? 'rgba(255, 255, 255, 0.3)' : 'rgba(51, 65, 85, 0.4)';
+                ctx.lineWidth = 1;
+
+                [30, 60].forEach(alt => {
+                    const r = radius * ((90 - alt) / 90);
+                    ctx.beginPath();
+                    ctx.arc(center, center, r, 0, Math.PI * 2);
+                    ctx.stroke();
+                });
+
+                ctx.beginPath();
+                ctx.moveTo(center - radius, center);
+                ctx.lineTo(center + radius, center);
+                ctx.moveTo(center, center - radius);
+                ctx.lineTo(center, center + radius);
+                ctx.stroke();
+            }
+
+            // Cardinal Labels
+            ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+            ctx.fillStyle = isDaytime ? '#ffffff' : '#f59e0b';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            ctx.fillText('N (북)', center, center - radius + 14);
+            ctx.fillText('S (남)', center, center + radius - 14);
+            ctx.fillText('E (동)', center + radius - 16, center);
+            ctx.fillText('W (서)', center - radius + 16, center);
+
+            if (isDaytime) return; // Hide night celestial objects during full day
+
+            // Calculate current weather visibility limit based on cloud cover
+            const weather = calculateKMAHourlyWeather(selectedDate, selectedHour);
+            const visibilityLimitMag = Math.max(0.5, 4.5 - (weather.cloud * 0.4)); // Cloud reduces limit magnitude
+
+            // Render Actual Real Fixed Major Stars with Vibrant Spectral Colors
+            realStarsDatabase.forEach(star => {
+                if (star.mag > visibilityLimitMag) return;
+
+                const pos = calculatePosition(star, selectedHour, selectedDate);
+                if (!pos.isVisible) return;
+
+                const coords = altAzToCanvasCoords(pos.altitude, pos.azimuth, radius);
+                const starRadius = Math.max(2.2, 4.5 - star.mag * 0.6);
+
+                // Multi-layer Spectral Color Glow Effect
+                ctx.beginPath();
+                ctx.arc(coords.x, coords.y, starRadius + 4, 0, Math.PI * 2);
+                ctx.fillStyle = star.color || '#ffffff';
+                ctx.globalAlpha = 0.38;
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+
+                // Solid Core Star Node with Dynamic Shadow Glow
+                ctx.beginPath();
+                ctx.arc(coords.x, coords.y, starRadius, 0, Math.PI * 2);
+                ctx.fillStyle = star.color || '#ffffff';
+                ctx.shadowColor = star.color || '#ffffff';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            // Celestial Objects & Constellations Rendering
+            celestialDatabase.forEach(obj => {
+                const pos = calculatePosition(obj, selectedHour, selectedDate);
+                if (!pos.isVisible) return;
+
+                const coords = altAzToCanvasCoords(pos.altitude, pos.azimuth, radius);
+                const isSelected = obj.id === selectedObjectId;
+
+                // Constellation Lines (별자리 형태선)
+                if (obj.type === 'constellation' && showLines && obj.stars && obj.lines) {
+                    ctx.strokeStyle = isSelected ? 'rgba(245, 158, 11, 0.85)' : 'rgba(147, 197, 253, 0.35)';
+                    ctx.lineWidth = isSelected ? 1.8 : 1;
+
+                    const starCoords = obj.stars.map(s => {
+                        const starPos = calculatePosition({ baseRA: s.ra, baseDec: s.dec }, selectedHour, selectedDate);
+                        return {
+                            ...altAzToCanvasCoords(starPos.altitude, starPos.azimuth, radius),
+                            color: s.color || obj.color
+                        };
+                    });
+
+                    obj.lines.forEach(pair => {
+                        const p1 = starCoords[pair[0]];
+                        const p2 = starCoords[pair[1]];
+                        if (p1 && p2) {
+                            ctx.beginPath();
+                            ctx.moveTo(p1.x, p1.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.stroke();
+                        }
+                    });
+
+                    // Draw colored star nodes for constellation lines
+                    starCoords.forEach(sc => {
+                        ctx.beginPath();
+                        ctx.arc(sc.x, sc.y, isSelected ? 3.0 : 2.2, 0, Math.PI * 2);
+                        ctx.fillStyle = sc.color || '#93c5fd';
+                        ctx.shadowColor = sc.color || '#93c5fd';
+                        ctx.shadowBlur = 6;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    });
+                }
+
+                // Selection Highlight Glow
+                if (isSelected) {
+                    ctx.beginPath();
+                    ctx.arc(coords.x, coords.y, 14, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(245, 158, 11, 0.25)';
+                    ctx.fill();
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+
+                // Main Alpha Star / Object Node
+                ctx.beginPath();
+                let pointRadius = Math.max(3, 7 - obj.mag * 0.8);
+                if (obj.type === 'moon') pointRadius = 9;
+
+                ctx.arc(coords.x, coords.y, pointRadius, 0, Math.PI * 2);
+                ctx.fillStyle = obj.color || '#ffffff';
+                ctx.shadowColor = obj.color || '#ffffff';
+                ctx.shadowBlur = isSelected ? 14 : 8;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.font = isSelected ? 'bold 11px "Noto Sans KR"' : '10px "Noto Sans KR"';
+                ctx.fillStyle = isSelected ? '#f59e0b' : '#e2e8f0';
+                ctx.fillText(obj.name.split(' ')[0], coords.x, coords.y + pointRadius + 10);
+            });
+        }
+
+        function handleCanvasClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            const radius = rect.width / 2 * 0.92;
+
+            let closestObj = null;
+            let closestRealStar = null;
+            let minDistance = 25;
+
+            // Check Major Fixed Real Stars First
+            realStarsDatabase.forEach(star => {
+                const pos = calculatePosition(star, selectedHour, selectedDate);
+                if (!pos.isVisible) return;
+
+                const coords = altAzToCanvasCoords(pos.altitude, pos.azimuth, radius);
+                const dist = Math.hypot(coords.x - clickX, coords.y - clickY);
+
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestRealStar = { ...star, ...pos };
+                }
+            });
+
+            // Check Celestial Database Objects
+            celestialDatabase.forEach(obj => {
+                const pos = calculatePosition(obj, selectedHour, selectedDate);
+                if (!pos.isVisible) return;
+
+                const coords = altAzToCanvasCoords(pos.altitude, pos.azimuth, radius);
+                const dist = Math.hypot(coords.x - clickX, coords.y - clickY);
+
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestObj = obj;
+                    closestRealStar = null;
+                }
+            });
+
+            if (closestRealStar) {
+                selectedStarDetail = closestRealStar;
+                selectedObjectId = null;
+                drawSkyMap();
+                updateStarInspector(closestRealStar);
+            } else if (closestObj) {
+                selectedObjectId = closestObj.id;
+                selectedStarDetail = null;
+                updateCelestialChecklist();
+                drawSkyMap();
+                updateInspector();
+            }
+        }
+
+        function updateStarInspector(star) {
+            document.getElementById('inspectorName').innerText = `${star.name}`;
+            document.getElementById('inspectorCategory').innerText = `주요 항성 (Star) • ${star.spectral}`;
+            document.getElementById('inspectorMag').innerText = `밝기: ${star.mag} 등급`;
+            
+            document.getElementById('inspectorAzimuth').innerText = `${Math.round(star.azimuth)}° (${getDirectionName(star.azimuth)})`;
+            document.getElementById('inspectorAltitude').innerText = `${Math.round(star.altitude)}°`;
+            document.getElementById('inspectorTool').innerText = star.mag < 2.0 ? '맨눈 관측' : '쌍안경 관측';
+            document.getElementById('inspectorBestTime').innerText = star.area;
+            
+            document.getElementById('inspectorDescription').innerText = `${star.name}은(는) ${star.area}에 속하는 밝은 항성으로, 고유 분광형 ${star.spectral} 색상으로 은평구 밤하늘에서 선명하게 관측됩니다.`;
+
+            const iconContainer = document.getElementById('inspectorIcon');
+            iconContainer.style.borderColor = star.color;
+            iconContainer.style.color = star.color;
+            iconContainer.innerHTML = `<i class="fa-solid fa-star"></i>`;
+        }
+
+        function updateInspector() {
+            const obj = celestialDatabase.find(item => item.id === selectedObjectId);
+            if (!obj) return;
+
+            const pos = calculatePosition(obj, selectedHour, selectedDate);
+
+            const titleName = obj.alphaStar ? `${obj.name} (알파성: ${obj.alphaStar})` : obj.name;
+            document.getElementById('inspectorName').innerText = titleName;
+            document.getElementById('inspectorCategory').innerText = `${obj.category} • 관측 상태: ${pos.isVisible ? '가시권 (지평선 위)' : '지평선 아래'}`;
+            document.getElementById('inspectorMag').innerText = `밝기: ${obj.mag} 등급`;
+            
+            document.getElementById('inspectorAzimuth').innerText = `${Math.round(pos.azimuth)}° (${getDirectionName(pos.azimuth)})`;
+            document.getElementById('inspectorAltitude').innerText = `${Math.round(pos.altitude)}°`;
+            document.getElementById('inspectorTool').innerText = obj.tool;
+            document.getElementById('inspectorBestTime').innerText = obj.area || "은평구 하늘 구역";
+            
+            document.getElementById('inspectorDescription').innerText = obj.description;
+
+            const iconContainer = document.getElementById('inspectorIcon');
+            iconContainer.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+            iconContainer.style.color = '#f59e0b';
+            iconContainer.innerHTML = `<i class="fa-solid ${obj.icon || 'fa-star'}"></i>`;
+        }
+    </script>
+</body>
+</html>
